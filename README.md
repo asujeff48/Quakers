@@ -1,2 +1,36 @@
 # Quakers
-Shows a map of the US with all reported earthquakes over a period of time
+
+Live map of reported earthquakes across the United States, using public [USGS Earthquake Catalog](https://earthquake.usgs.gov/) data.
+
+## Features
+
+- Full-bleed USA map with magnitude-scaled markers
+- Timeframes: **24 hours** (default), 48 hours, 1 week, 1 month
+- Click a quake for place, time, depth, and a link to the USGS event page
+- Covers the contiguous U.S., Alaska, Hawaii, and Puerto Rico / U.S. Virgin Islands
+
+## Develop
+
+```bash
+npm install
+npm run dev
+```
+
+## Build
+
+```bash
+npm run build
+npm run preview
+```
+
+## Deploy (Railway)
+
+Same pattern as SkyLight:
+
+1. Railway builds the `Dockerfile` (Vite build → Caddy static server).
+2. Production autodeploys from GitHub `main`.
+3. Caddy listens on `$PORT` (default `3000`).
+
+## Data source
+
+Earthquakes are requested from the USGS FDSN Event Web Service (`format=geojson`) and filtered to U.S. regions client-side.

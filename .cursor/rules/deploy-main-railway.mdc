@@ -1,0 +1,12 @@
+---
+description: Always land ready changes on GitHub main so Railway production updates
+alwaysApply: true
+---
+
+# GitHub main → Railway production
+
+- GitHub `main` is the only source of truth for app code.
+- Railway production is the only user-facing deploy; it autodeploys from `main`.
+- When work is ready for users (especially when they test the Railway URL), merge into `main` and push — do not leave the fix only on a feature branch or draft PR.
+- After pushing `main`, confirm the Railway deploy succeeds before asking the user to retest.
+- Never treat unmerged branches, local preview, or one-off Railway CLI uploads as production.

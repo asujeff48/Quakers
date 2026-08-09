@@ -1,0 +1,13 @@
+node_modules
+dist
+dist-ssr
+.git
+.gitignore
+*.md
+.oxlintrc.json
+.vscode
+.idea
+*.log
+.env*
+*.local
+.cursor

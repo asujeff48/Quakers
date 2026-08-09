@@ -1,0 +1,17 @@
+{
+  "name": "Quakers — Vite/React dev",
+  "install": "npm install",
+  "terminals": [
+    {
+      "name": "dev server",
+      "command": "npm run dev -- --host 0.0.0.0 --port 5173",
+      "description": "Vite dev server for the app. Serves the site on http://localhost:5173 with hot reload."
+    }
+  ],
+  "ports": [
+    {
+      "name": "vite",
+      "port": 5173
+    }
+  ]
+}
