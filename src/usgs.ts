@@ -144,3 +144,23 @@ export function formatMagnitude(mag: number | null): string {
   if (mag === null || Number.isNaN(mag)) return '—'
   return mag.toFixed(1)
 }
+
+/** Split USGS place strings like "3 km NNW of Murrieta, CA" into locale + state. */
+export function parsePlace(place: string): { locale: string; state: string | null } {
+  const trimmed = place.trim()
+  if (!trimmed) return { locale: 'Unknown location', state: null }
+
+  const ofMatch = trimmed.match(
+    /^(?:\d+(?:\.\d+)?\s*km\s+[A-Za-z]+\s+of\s+)(.+),\s*([^,]+)$/i,
+  )
+  if (ofMatch) {
+    return { locale: ofMatch[1].trim(), state: ofMatch[2].trim() }
+  }
+
+  const comma = trimmed.match(/^(.+),\s*([^,]+)$/)
+  if (comma) {
+    return { locale: comma[1].trim(), state: comma[2].trim() }
+  }
+
+  return { locale: trimmed, state: null }
+}

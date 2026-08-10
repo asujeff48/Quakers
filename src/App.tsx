@@ -46,7 +46,6 @@ export default function App() {
     return () => controller.abort()
   }, [timeframe])
 
-  const selected = earthquakes.find((q) => q.id === selectedId) ?? null
   const strongest = earthquakes.reduce<Earthquake | null>((best, quake) => {
     if (quake.magnitude === null) return best
     if (!best || (best.magnitude ?? -Infinity) < quake.magnitude) return quake
@@ -72,8 +71,8 @@ export default function App() {
           <p className="brand">Quakers</p>
           <h1>Reported earthquakes across the United States</h1>
           <p className="lede">
-            Live USGS catalog for the {activeLabel.toLowerCase()}. Markers scale and warm with
-            magnitude.
+            Live USGS catalog for the {activeLabel.toLowerCase()}. Click a quake for locale, state,
+            time, and strength — dense areas group into clusters you can zoom into.
           </p>
         </div>
 
@@ -130,44 +129,6 @@ export default function App() {
         <span className="swatch" style={{ background: magnitudeColor(6.5) }} />
         <span>M6+</span>
       </div>
-
-      {selected ? (
-        <section className="detail" aria-label="Selected earthquake">
-          <button
-            type="button"
-            className="detail-close"
-            onClick={() => setSelectedId(null)}
-            aria-label="Close details"
-          >
-            Close
-          </button>
-          <p className="detail-mag" style={{ color: magnitudeColor(selected.magnitude) }}>
-            M {formatMagnitude(selected.magnitude)}
-          </p>
-          <h2>{selected.place}</h2>
-          <dl>
-            <div>
-              <dt>When</dt>
-              <dd>{formatQuakeTime(selected.time)}</dd>
-            </div>
-            <div>
-              <dt>Depth</dt>
-              <dd>
-                {selected.depthKm === null ? '—' : `${selected.depthKm.toFixed(1)} km`}
-              </dd>
-            </div>
-            <div>
-              <dt>Coords</dt>
-              <dd>
-                {selected.latitude.toFixed(3)}°, {selected.longitude.toFixed(3)}°
-              </dd>
-            </div>
-          </dl>
-          <a href={selected.url} target="_blank" rel="noreferrer">
-            USGS event page
-          </a>
-        </section>
-      ) : null}
 
       <footer className="credit">
         Data from the{' '}
