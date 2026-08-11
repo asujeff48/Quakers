@@ -289,16 +289,25 @@
   left: max(1.25rem, env(safe-area-inset-left));
   bottom: max(2.75rem, calc(env(safe-area-inset-bottom) + 2.4rem));
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.4rem 0.6rem;
-  border-radius: 999px;
+  gap: 0.45rem 0.65rem;
+  max-width: min(28rem, calc(100vw - 5.5rem));
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.85rem;
   background: rgba(244, 248, 250, 0.9);
   border: 1px solid var(--panel-edge);
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--ink-soft);
   backdrop-filter: blur(10px);
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  white-space: nowrap;
 }
 
 .legend .swatch {

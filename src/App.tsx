@@ -118,16 +118,39 @@ export default function App() {
         )}
       </aside>
 
-      <div className="legend" aria-label="Magnitude legend">
-        <span>M0</span>
-        <span className="swatch" style={{ background: magnitudeColor(0.5) }} />
-        <span className="swatch" style={{ background: magnitudeColor(1.5) }} />
-        <span className="swatch" style={{ background: magnitudeColor(2.5) }} />
-        <span className="swatch" style={{ background: magnitudeColor(3.5) }} />
-        <span className="swatch" style={{ background: magnitudeColor(4.5) }} />
-        <span className="swatch" style={{ background: magnitudeColor(5.5) }} />
-        <span className="swatch" style={{ background: magnitudeColor(6.5) }} />
-        <span>M6+</span>
+      <div className="legend" aria-label="Magnitude color legend">
+        <span className="legend-item">
+          <span className="swatch" style={{ background: magnitudeColor(1.5) }} />
+          1–2.9
+        </span>
+        <span className="legend-item">
+          <span className="swatch" style={{ background: magnitudeColor(3.5) }} />
+          3
+        </span>
+        <span className="legend-item">
+          <span className="swatch" style={{ background: magnitudeColor(4.5) }} />
+          4
+        </span>
+        <span className="legend-item">
+          <span className="swatch" style={{ background: magnitudeColor(5.5) }} />
+          5
+        </span>
+        <span className="legend-item">
+          <span className="swatch" style={{ background: magnitudeColor(6.5) }} />
+          6
+        </span>
+        <span className="legend-item">
+          <span className="swatch" style={{ background: magnitudeColor(7.5) }} />
+          7
+        </span>
+        <span className="legend-item">
+          <span className="swatch" style={{ background: magnitudeColor(8.5) }} />
+          8
+        </span>
+        <span className="legend-item">
+          <span className="swatch" style={{ background: magnitudeColor(9.5) }} />
+          9+
+        </span>
       </div>
 
       <footer className="credit">

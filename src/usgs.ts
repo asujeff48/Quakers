@@ -113,15 +113,18 @@ export async function fetchUsaEarthquakes(
   }
 }
 
+/** Marker / legend colors by USGS magnitude band. */
 export function magnitudeColor(mag: number | null): string {
   const m = mag ?? 0
-  if (m >= 6) return '#9b2226'
-  if (m >= 5) return '#ae2012'
-  if (m >= 4) return '#bb3e03'
-  if (m >= 3) return '#ca6702'
-  if (m >= 2) return '#ee9b00'
-  if (m >= 1) return '#e9c46a'
-  return '#94a3b8'
+  if (m >= 9) return '#1e3a8a' // 9–9.99 dark blue
+  if (m >= 8) return '#7dd3fc' // 8–8.99 light blue
+  if (m >= 7) return '#dc2626' // 7–7.99 red
+  if (m >= 6) return '#16a34a' // 6–6.99 green
+  if (m >= 5) return '#7c3aed' // 5–5.99 purple
+  if (m >= 4) return '#eab308' // 4–4.99 yellow
+  if (m >= 3) return '#92400e' // 3–3.99 brown
+  if (m >= 1) return '#ec4899' // 1–2.99 pink
+  return '#94a3b8' // below 1
 }
 
 export function magnitudeRadius(mag: number | null): number {
