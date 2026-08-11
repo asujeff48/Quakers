@@ -6,7 +6,7 @@ Live map of reported earthquakes across the United States, using public [USGS Ea
 
 - Magnitude-scaled markers color-coded by strength (pink → brown → yellow → purple → green → red → light blue → dark blue)
 - Timeframes: **24 hours** (default), 48 hours, 1 week, 1 month
-- Click a quake for a popup with locale, state, date/time, and magnitude
+- Click a quake for locale, state, date/time, and magnitude; click another to switch without closing
 - Nearby quakes cluster at wider zooms (count + strongest magnitude); click a cluster to zoom in, or spiderfy at close zoom
 - Zoom +/- controls, drag/pan, and touch pinch-zoom / touch-drag on phones and tablets
 - Covers the contiguous U.S., Alaska, Hawaii, and Puerto Rico / U.S. Virgin Islands

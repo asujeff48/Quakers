@@ -1,16 +1,10 @@
 import { useEffect } from 'react'
 import L from 'leaflet'
 import 'leaflet.markercluster'
-import { MapContainer, Marker, Popup, TileLayer, useMap, ZoomControl } from 'react-leaflet'
+import { MapContainer, Marker, TileLayer, useMap, useMapEvents, ZoomControl } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import type { Earthquake } from '../types'
-import {
-  formatMagnitude,
-  formatQuakeTime,
-  magnitudeColor,
-  magnitudeRadius,
-  parsePlace,
-} from '../usgs'
+import { formatMagnitude, magnitudeColor, magnitudeRadius } from '../usgs'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
@@ -29,9 +23,8 @@ function MapFocus({ selected }: { selected: Earthquake | null }) {
 
   useEffect(() => {
     if (!selected) return
-    map.flyTo([selected.latitude, selected.longitude], Math.max(map.getZoom(), 7), {
-      duration: 0.85,
-    })
+    // Keep current zoom so switching quakes is a light pan, not a reset.
+    map.panTo([selected.latitude, selected.longitude], { animate: true, duration: 0.35 })
   }, [map, selected])
 
   return null
@@ -51,9 +44,19 @@ function MapGestures() {
 
     const container = map.getContainer()
     container.style.touchAction = 'none'
-    container.setAttribute('aria-label', 'Earthquake map. Drag to pan, pinch or use zoom buttons to zoom.')
+    container.setAttribute(
+      'aria-label',
+      'Earthquake map. Drag to pan, pinch or use zoom buttons to zoom. Click a quake for details.',
+    )
   }, [map])
 
+  return null
+}
+
+function MapBackgroundClick({ onClear }: { onClear: () => void }) {
+  useMapEvents({
+    click: () => onClear(),
+  })
   return null
 }
 
@@ -68,7 +71,6 @@ function createQuakeIcon(magnitude: number | null, selected: boolean): L.DivIcon
     className: `quake-div-icon quake-mag-${magKey}${selected ? ' is-selected' : ''}`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
-    popupAnchor: [0, -size / 2],
     html: `<span class="quake-dot" style="width:${size}px;height:${size}px;background:${color};border:${ring};opacity:${selected ? 0.95 : 0.78}"></span>`,
   })
 }
@@ -102,43 +104,6 @@ function createClusterIcon(cluster: L.MarkerCluster): L.DivIcon {
   })
 }
 
-function QuakePopup({ quake }: { quake: Earthquake }) {
-  const { locale, state } = parsePlace(quake.place)
-
-  return (
-    <div className="quake-popup">
-      <p className="quake-popup-mag" style={{ color: magnitudeColor(quake.magnitude) }}>
-        M {formatMagnitude(quake.magnitude)}
-      </p>
-      <dl>
-        <div>
-          <dt>Locale</dt>
-          <dd>{locale}</dd>
-        </div>
-        <div>
-          <dt>State</dt>
-          <dd>{state ?? '—'}</dd>
-        </div>
-        <div>
-          <dt>When</dt>
-          <dd>
-            <time dateTime={new Date(quake.time).toISOString()}>
-              {formatQuakeTime(quake.time)}
-            </time>
-          </dd>
-        </div>
-        <div>
-          <dt>Strength</dt>
-          <dd>Magnitude {formatMagnitude(quake.magnitude)}</dd>
-        </div>
-      </dl>
-      <a href={quake.url} target="_blank" rel="noreferrer">
-        USGS event page
-      </a>
-    </div>
-  )
-}
-
 export function EarthquakeMap({ earthquakes, selectedId, onSelect }: Props) {
   const selected = earthquakes.find((q) => q.id === selectedId) ?? null
 
@@ -164,6 +129,7 @@ export function EarthquakeMap({ earthquakes, selectedId, onSelect }: Props) {
       />
       <ZoomControl position="bottomright" />
       <MapGestures />
+      <MapBackgroundClick onClear={() => onSelect(null)} />
       <MapFocus selected={selected} />
       <MarkerClusterGroup
         chunkedLoading
@@ -180,16 +146,12 @@ export function EarthquakeMap({ earthquakes, selectedId, onSelect }: Props) {
             position={[quake.latitude, quake.longitude]}
             icon={createQuakeIcon(quake.magnitude, quake.id === selectedId)}
             eventHandlers={{
-              click: () => onSelect(quake.id),
-              popupclose: () => {
-                if (selectedId === quake.id) onSelect(null)
+              click: (event) => {
+                L.DomEvent.stopPropagation(event.originalEvent)
+                onSelect(quake.id)
               },
             }}
-          >
-            <Popup>
-              <QuakePopup quake={quake} />
-            </Popup>
-          </Marker>
+          />
         ))}
       </MarkerClusterGroup>
     </MapContainer>
