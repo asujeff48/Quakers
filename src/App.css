@@ -31,6 +31,7 @@
   inset: 0;
   z-index: 0;
   animation: map-fade-in 900ms ease-out both;
+  touch-action: none;
 }
 
 .map-veil {
@@ -49,12 +50,53 @@
   background: #d9e3ea;
   font-family: var(--font-body);
   z-index: 0;
+  touch-action: none;
+  cursor: grab;
+}
+
+.quake-map.leaflet-drag-target,
+.quake-map.leaflet-dragging {
+  cursor: grabbing;
 }
 
 .quake-map .leaflet-control-attribution {
   background: rgba(244, 248, 250, 0.8);
   color: var(--ink-soft);
   font-size: 10px;
+}
+
+.quake-map .leaflet-control-zoom {
+  border: 1px solid var(--panel-edge);
+  border-radius: 0.65rem;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(21, 32, 41, 0.12);
+  margin-right: max(1rem, env(safe-area-inset-right));
+  margin-bottom: max(2.75rem, calc(env(safe-area-inset-bottom) + 2.4rem));
+}
+
+.quake-map .leaflet-control-zoom a {
+  width: 2.35rem;
+  height: 2.35rem;
+  line-height: 2.35rem;
+  font-size: 1.15rem;
+  color: var(--brand);
+  background: rgba(244, 248, 250, 0.95);
+  border-bottom-color: var(--panel-edge);
+}
+
+.quake-map .leaflet-control-zoom a:hover {
+  background: #fff;
+  color: var(--ink);
+}
+
+.quake-map .leaflet-control-zoom-in {
+  border-top-left-radius: 0.65rem;
+  border-top-right-radius: 0.65rem;
+}
+
+.quake-map .leaflet-control-zoom-out {
+  border-bottom-left-radius: 0.65rem;
+  border-bottom-right-radius: 0.65rem;
 }
 
 .quake-div-icon {

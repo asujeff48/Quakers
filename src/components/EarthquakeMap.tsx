@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import L from 'leaflet'
 import 'leaflet.markercluster'
-import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
+import { MapContainer, Marker, Popup, TileLayer, useMap, ZoomControl } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import type { Earthquake } from '../types'
 import {
@@ -33,6 +33,26 @@ function MapFocus({ selected }: { selected: Earthquake | null }) {
       duration: 0.85,
     })
   }, [map, selected])
+
+  return null
+}
+
+/** Keep pan / pinch-zoom / scroll-zoom enabled for mouse and touch. */
+function MapGestures() {
+  const map = useMap()
+
+  useEffect(() => {
+    map.dragging.enable()
+    map.touchZoom.enable()
+    map.doubleClickZoom.enable()
+    map.scrollWheelZoom.enable()
+    map.boxZoom.enable()
+    map.keyboard.enable()
+
+    const container = map.getContainer()
+    container.style.touchAction = 'none'
+    container.setAttribute('aria-label', 'Earthquake map. Drag to pan, pinch or use zoom buttons to zoom.')
+  }, [map])
 
   return null
 }
@@ -129,13 +149,21 @@ export function EarthquakeMap({ earthquakes, selectedId, onSelect }: Props) {
       zoom={USA_ZOOM}
       minZoom={3}
       maxZoom={12}
-      scrollWheelZoom
       zoomControl={false}
+      dragging
+      touchZoom
+      doubleClickZoom
+      scrollWheelZoom
+      boxZoom
+      keyboard
+      preferCanvas={false}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
+      <ZoomControl position="bottomright" />
+      <MapGestures />
       <MapFocus selected={selected} />
       <MarkerClusterGroup
         chunkedLoading
