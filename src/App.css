@@ -294,6 +294,7 @@
   gap: 0.35rem;
 }
 
+.status-strongest-mag,
 .status-strongest-place {
   color: var(--ink);
   font-weight: 700;

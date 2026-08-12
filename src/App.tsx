@@ -128,6 +128,12 @@ export default function App() {
             </p>
             {strongest && strongestLocation ? (
               <p className="status-strongest">
+                <span className="status-strongest-mag">
+                  M {formatMagnitude(strongest.magnitude)}
+                </span>
+                <span className="status-strongest-sep" aria-hidden="true">
+                  ·
+                </span>
                 <span className="status-strongest-place">{strongestLocation}</span>
                 <span className="status-strongest-sep" aria-hidden="true">
                   ·
