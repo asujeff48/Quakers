@@ -55,6 +55,12 @@ export default function App() {
     if (!best || (best.magnitude ?? -Infinity) < quake.magnitude) return quake
     return best
   }, null)
+  const strongestPlace = strongest ? parsePlace(strongest.place) : null
+  const strongestLocation = strongestPlace
+    ? strongestPlace.state
+      ? `${strongestPlace.locale}, ${strongestPlace.state}`
+      : strongestPlace.locale
+    : null
 
   const activeLabel =
     TIMEFRAMES.find((option) => option.id === timeframe)?.label ?? 'Last 24 hours'
@@ -104,21 +110,34 @@ export default function App() {
         ) : error ? (
           <p className="status error">{error}</p>
         ) : (
-          <p className="status">
-            <strong>{earthquakes.length.toLocaleString()}</strong> quakes
-            {strongest ? (
-              <>
-                {' '}
-                · strongest <strong>M {formatMagnitude(strongest.magnitude)}</strong>
-              </>
+          <div className="status-block">
+            <p className="status">
+              <strong>{earthquakes.length.toLocaleString()}</strong> quakes
+              {strongest ? (
+                <>
+                  {' '}
+                  · strongest <strong>M {formatMagnitude(strongest.magnitude)}</strong>
+                </>
+              ) : null}
+              {fetchedAt ? (
+                <span className="fetched">
+                  {' '}
+                  · updated {formatQuakeTime(fetchedAt)}
+                </span>
+              ) : null}
+            </p>
+            {strongest && strongestLocation ? (
+              <p className="status-strongest">
+                <span className="status-strongest-place">{strongestLocation}</span>
+                <span className="status-strongest-sep" aria-hidden="true">
+                  ·
+                </span>
+                <time dateTime={new Date(strongest.time).toISOString()}>
+                  {formatQuakeTime(strongest.time)}
+                </time>
+              </p>
             ) : null}
-            {fetchedAt ? (
-              <span className="fetched">
-                {' '}
-                · updated {formatQuakeTime(fetchedAt)}
-              </span>
-            ) : null}
-          </p>
+          </div>
         )}
       </aside>
 

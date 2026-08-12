@@ -247,6 +247,12 @@
   animation: rise-in 850ms 120ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.status-block {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: start;
+}
+
 .status {
   display: inline-flex;
   align-items: center;
@@ -272,6 +278,33 @@
 
 .status .fetched {
   opacity: 0.85;
+}
+
+.status-strongest {
+  margin: 0;
+  padding: 0 0.15rem 0 0.75rem;
+  max-width: min(36rem, 100%);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink-soft);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.status-strongest-place {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.status-strongest-sep {
+  opacity: 0.55;
+}
+
+.status-strongest time {
+  font-variant-numeric: tabular-nums;
 }
 
 .pulse-dot {
