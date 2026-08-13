@@ -11,11 +11,51 @@ import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 
 const USA_CENTER: [number, number] = [39.5, -98.35]
 const USA_ZOOM = 4
+const OVERLAY_BREAKPOINT = 720
 
 type Props = {
   earthquakes: Earthquake[]
   selectedId: string | null
   onSelect: (id: string | null) => void
+}
+
+/** Shift the view so geographic points sit in the open map, not under left-side copy. */
+function overlayShift(map: L.Map): L.Point {
+  if (map.getSize().x <= OVERLAY_BREAKPOINT) {
+    return L.point(0, 0)
+  }
+
+  const selectors = ['.brand', '.lede', '.controls', '.status', '.status-strongest']
+  let right = 0
+  for (const selector of selectors) {
+    const el = document.querySelector(selector)
+    if (el) right = Math.max(right, el.getBoundingClientRect().right)
+  }
+
+  if (right <= 0) return L.point(0, 0)
+  return L.point(Math.round(right / 2), 0)
+}
+
+function shiftedLatLng(map: L.Map, latlng: L.LatLngExpression, zoom = map.getZoom()): L.LatLng {
+  const shift = overlayShift(map)
+  if (shift.x === 0 && shift.y === 0) return L.latLng(latlng)
+  return map.unproject(map.project(latlng, zoom).subtract(shift), zoom)
+}
+
+function MapInitialView() {
+  const map = useMap()
+
+  useEffect(() => {
+    const apply = () => {
+      map.setView(shiftedLatLng(map, USA_CENTER, USA_ZOOM), USA_ZOOM, { animate: false })
+    }
+
+    apply()
+    const frame = requestAnimationFrame(apply)
+    return () => cancelAnimationFrame(frame)
+  }, [map])
+
+  return null
 }
 
 function MapFocus({ selected }: { selected: Earthquake | null }) {
@@ -24,7 +64,10 @@ function MapFocus({ selected }: { selected: Earthquake | null }) {
   useEffect(() => {
     if (!selected) return
     // Keep current zoom so switching quakes is a light pan, not a reset.
-    map.panTo([selected.latitude, selected.longitude], { animate: true, duration: 0.35 })
+    map.panTo(shiftedLatLng(map, [selected.latitude, selected.longitude]), {
+      animate: true,
+      duration: 0.35,
+    })
   }, [map, selected])
 
   return null
@@ -129,6 +172,7 @@ export function EarthquakeMap({ earthquakes, selectedId, onSelect }: Props) {
       />
       <ZoomControl position="bottomright" />
       <MapGestures />
+      <MapInitialView />
       <MapBackgroundClick onClear={() => onSelect(null)} />
       <MapFocus selected={selected} />
       <MarkerClusterGroup
