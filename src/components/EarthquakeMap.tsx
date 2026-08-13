@@ -24,26 +24,44 @@ type Props = {
 }
 
 /**
- * Right edge of painted content. Block-level chrome (title, controls) stretches
- * to the 44rem column, which would push the map far past the actual words.
+ * Right edge of painted ink. Flex/grid chrome stretches to the 44rem column, and
+ * Range line boxes can match that full width — both would shove the map too far right.
  */
 function contentRight(el: Element): number {
   const style = getComputedStyle(el)
+  if (style.display === 'none' || style.visibility === 'hidden') return 0
+
+  const display = style.display
   const shrinkWrap =
-    style.display === 'inline' ||
-    style.display === 'inline-block' ||
-    style.display === 'inline-flex'
+    display === 'inline' || display === 'inline-block' || display === 'inline-flex'
+
   if (shrinkWrap) return el.getBoundingClientRect().right
+
+  if (display === 'flex' || display === 'grid' || display === 'inline-grid') {
+    let right = 0
+    for (const child of el.children) {
+      right = Math.max(right, contentRight(child))
+    }
+    return right
+  }
 
   const range = document.createRange()
   range.selectNodeContents(el)
   const rects = Array.from(range.getClientRects())
-  if (rects.length === 0) return 0
+  if (rects.length === 0) {
+    let right = 0
+    for (const child of el.children) {
+      right = Math.max(right, contentRight(child))
+    }
+    return right
+  }
   return Math.max(...rects.map((rect) => rect.right))
 }
 
 function overlayRightEdge(): number {
-  const selectors = ['.brand', '.brand-block h1', '.lede', '.controls', '.status', '.status-strongest']
+  // Desktop: sit just past the strongest-quake banner (pill + location line).
+  // Title/lede are narrower and sit higher, so they are not the limiter.
+  const selectors = ['.status', '.status-strongest']
   let right = 0
   for (const selector of selectors) {
     const el = document.querySelector(selector)
@@ -53,8 +71,8 @@ function overlayRightEdge(): number {
 }
 
 /**
- * Pan only far enough that the west coast clears the title and strongest-quake
- * banner. Centering in the leftover viewport over-shifts on wide screens.
+ * Pan only far enough that the west coast clears the strongest-quake banner.
+ * Centering in the leftover viewport over-shifts on wide screens.
  */
 function overlayShift(map: L.Map): L.Point {
   if (map.getSize().x <= OVERLAY_BREAKPOINT) {
