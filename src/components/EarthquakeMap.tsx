@@ -23,12 +23,31 @@ type Props = {
   onSelect: (id: string | null) => void
 }
 
+/**
+ * Right edge of painted content. Block-level chrome (title, controls) stretches
+ * to the 44rem column, which would push the map far past the actual words.
+ */
+function contentRight(el: Element): number {
+  const style = getComputedStyle(el)
+  const shrinkWrap =
+    style.display === 'inline' ||
+    style.display === 'inline-block' ||
+    style.display === 'inline-flex'
+  if (shrinkWrap) return el.getBoundingClientRect().right
+
+  const range = document.createRange()
+  range.selectNodeContents(el)
+  const rects = Array.from(range.getClientRects())
+  if (rects.length === 0) return 0
+  return Math.max(...rects.map((rect) => rect.right))
+}
+
 function overlayRightEdge(): number {
   const selectors = ['.brand', '.brand-block h1', '.lede', '.controls', '.status', '.status-strongest']
   let right = 0
   for (const selector of selectors) {
     const el = document.querySelector(selector)
-    if (el) right = Math.max(right, el.getBoundingClientRect().right)
+    if (el) right = Math.max(right, contentRight(el))
   }
   return right
 }
@@ -69,11 +88,16 @@ function MapInitialView() {
 
     apply()
     const frame = requestAnimationFrame(apply)
-    // Status banner width lands after USGS data; remeasure once so we don't under-shift.
-    const later = window.setTimeout(apply, 500)
+    window.addEventListener('resize', apply)
+
+    const overlay = document.querySelector('.status-rail')
+    const observer = overlay ? new ResizeObserver(apply) : null
+    if (overlay) observer.observe(overlay)
+
     return () => {
       cancelAnimationFrame(frame)
-      window.clearTimeout(later)
+      window.removeEventListener('resize', apply)
+      observer?.disconnect()
     }
   }, [map])
 
