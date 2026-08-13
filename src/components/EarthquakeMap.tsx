@@ -12,6 +12,10 @@ import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 const USA_CENTER: [number, number] = [39.5, -98.35]
 const USA_ZOOM = 4
 const OVERLAY_BREAKPOINT = 720
+/** Contiguous west coast — keep this longitude just right of the overlay. */
+const WEST_COAST: [number, number] = [40.0, -124.3]
+/** Breathing room past the banner for cluster icons. */
+const OVERLAY_CLEARANCE = 40
 
 type Props = {
   earthquakes: Earthquake[]
@@ -19,21 +23,34 @@ type Props = {
   onSelect: (id: string | null) => void
 }
 
-/** Shift the view so geographic points sit in the open map, not under left-side copy. */
-function overlayShift(map: L.Map): L.Point {
-  if (map.getSize().x <= OVERLAY_BREAKPOINT) {
-    return L.point(0, 0)
-  }
-
-  const selectors = ['.brand', '.lede', '.controls', '.status', '.status-strongest']
+function overlayRightEdge(): number {
+  const selectors = ['.brand', '.brand-block h1', '.lede', '.controls', '.status', '.status-strongest']
   let right = 0
   for (const selector of selectors) {
     const el = document.querySelector(selector)
     if (el) right = Math.max(right, el.getBoundingClientRect().right)
   }
+  return right
+}
 
-  if (right <= 0) return L.point(0, 0)
-  return L.point(Math.round(right / 2), 0)
+/**
+ * Pan only far enough that the west coast clears the title and strongest-quake
+ * banner. Centering in the leftover viewport over-shifts on wide screens.
+ */
+function overlayShift(map: L.Map): L.Point {
+  if (map.getSize().x <= OVERLAY_BREAKPOINT) {
+    return L.point(0, 0)
+  }
+
+  const overlayRight = overlayRightEdge()
+  if (overlayRight <= 0) return L.point(0, 0)
+
+  const size = map.getSize()
+  const westFromCenter =
+    map.project(WEST_COAST, USA_ZOOM).x - map.project(USA_CENTER, USA_ZOOM).x
+  const unshiftedWestX = size.x / 2 + westFromCenter
+  const needed = Math.round(overlayRight + OVERLAY_CLEARANCE - unshiftedWestX)
+  return L.point(Math.max(0, needed), 0)
 }
 
 function shiftedLatLng(map: L.Map, latlng: L.LatLngExpression, zoom = map.getZoom()): L.LatLng {
@@ -52,7 +69,12 @@ function MapInitialView() {
 
     apply()
     const frame = requestAnimationFrame(apply)
-    return () => cancelAnimationFrame(frame)
+    // Status banner width lands after USGS data; remeasure once so we don't under-shift.
+    const later = window.setTimeout(apply, 500)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.clearTimeout(later)
+    }
   }, [map])
 
   return null
