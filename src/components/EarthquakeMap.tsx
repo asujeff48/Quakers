@@ -109,13 +109,20 @@ function MapInitialView() {
     window.addEventListener('resize', apply)
 
     const overlay = document.querySelector('.status-rail')
-    const observer = overlay ? new ResizeObserver(apply) : null
-    if (overlay) observer.observe(overlay)
+    if (!overlay) {
+      return () => {
+        cancelAnimationFrame(frame)
+        window.removeEventListener('resize', apply)
+      }
+    }
+
+    const observer = new ResizeObserver(apply)
+    observer.observe(overlay)
 
     return () => {
       cancelAnimationFrame(frame)
       window.removeEventListener('resize', apply)
-      observer?.disconnect()
+      observer.disconnect()
     }
   }, [map])
 
