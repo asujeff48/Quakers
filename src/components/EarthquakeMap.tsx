@@ -4,7 +4,7 @@ import 'leaflet.markercluster'
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents, ZoomControl } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import type { Earthquake } from '../types'
-import { formatMagnitude, magnitudeColor, magnitudeRadius } from '../usgs'
+import { formatMagnitude, formatQuakeTime, magnitudeColor, magnitudeRadius, parsePlace } from '../usgs'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
@@ -167,14 +167,48 @@ function MapGestures() {
   return null
 }
 
+const markerQuakeIds = new WeakMap<L.Marker, string>()
+
+function quakeLocation(quake: Earthquake): string {
+  const place = parsePlace(quake.place)
+  return place.state ? `${place.locale}, ${place.state}` : place.locale
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+function quakePopupHtml(quake: Earthquake, note?: string): string {
+  const noteLine = note ? `<p class="quake-bubble-note">${escapeHtml(note)}</p>` : ''
+  return `<div class="quake-bubble">
+    <p class="quake-bubble-mag" style="color:${magnitudeColor(quake.magnitude)}">M ${escapeHtml(formatMagnitude(quake.magnitude))}</p>
+    <p class="quake-bubble-place">${escapeHtml(quakeLocation(quake))}</p>
+    <time class="quake-bubble-time" datetime="${new Date(quake.time).toISOString()}">${escapeHtml(formatQuakeTime(quake.time))}</time>
+    ${noteLine}
+  </div>`
+}
+
+function isMapChromeTarget(target: EventTarget | null): boolean {
+  return target instanceof Element && Boolean(
+    target.closest('.quake-div-icon, .quake-cluster-icon, .leaflet-popup, .leaflet-marker-icon'),
+  )
+}
+
 function MapBackgroundClick({ onClear }: { onClear: () => void }) {
   useMapEvents({
-    click: () => onClear(),
+    click: (event) => {
+      if (isMapChromeTarget(event.originalEvent.target)) return
+      onClear()
+    },
   })
   return null
 }
 
-function createQuakeIcon(magnitude: number | null, selected: boolean): L.DivIcon {
+function createQuakeIcon(magnitude: number | null, selected: boolean, id: string): L.DivIcon {
   const radius = magnitudeRadius(magnitude) + (selected ? 3 : 0)
   const size = Math.round(radius * 2)
   const color = magnitudeColor(magnitude)
@@ -182,11 +216,19 @@ function createQuakeIcon(magnitude: number | null, selected: boolean): L.DivIcon
   const magKey = magnitude === null || Number.isNaN(magnitude) ? 'na' : magnitude.toFixed(1)
 
   return L.divIcon({
-    className: `quake-div-icon quake-mag-${magKey}${selected ? ' is-selected' : ''}`,
+    className: `quake-div-icon quake-mag-${magKey} quake-id-${id}${selected ? ' is-selected' : ''}`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
     html: `<span class="quake-dot" style="width:${size}px;height:${size}px;background:${color};border:${ring};opacity:${selected ? 0.95 : 0.78}"></span>`,
   })
+}
+
+function markerQuakeId(marker: L.Marker): string | null {
+  return (
+    markerQuakeIds.get(marker) ??
+    marker.options.icon?.options?.className?.match(/quake-id-(\S+)/)?.[1] ??
+    null
+  )
 }
 
 function markerMagnitude(marker: L.Marker): number {
@@ -250,17 +292,56 @@ export function EarthquakeMap({ earthquakes, selectedId, onSelect }: Props) {
         chunkedLoading
         showCoverageOnHover={false}
         spiderfyOnMaxZoom
-        zoomToBoundsOnClick
+        zoomToBoundsOnClick={false}
         maxClusterRadius={55}
         disableClusteringAtZoom={9}
         iconCreateFunction={createClusterIcon}
+        onClick={(event) => {
+          L.DomEvent.stopPropagation(event.originalEvent)
+          const cluster = (event.propagatedFrom ?? event.layer) as L.MarkerCluster
+          if (!cluster?.getAllChildMarkers) return
+
+          const children = cluster.getAllChildMarkers()
+          let strongest: Earthquake | null = null
+          for (const marker of children) {
+            const id = markerQuakeId(marker)
+            const quake = id ? earthquakes.find((item) => item.id === id) : undefined
+            if (!quake) continue
+            if (!strongest || (quake.magnitude ?? -Infinity) > (strongest.magnitude ?? -Infinity)) {
+              strongest = quake
+            }
+          }
+          if (!strongest) return
+
+          const note =
+            children.length > 1 ? `${children.length} quakes in this group` : undefined
+          cluster.unbindPopup()
+          cluster.bindPopup(quakePopupHtml(strongest, note), {
+            className: 'quake-popup',
+            autoPan: false,
+            maxWidth: 280,
+            closeButton: true,
+          })
+          cluster.openPopup()
+          onSelect(strongest.id)
+        }}
       >
         {earthquakes.map((quake) => (
           <Marker
             key={quake.id}
             position={[quake.latitude, quake.longitude]}
-            icon={createQuakeIcon(quake.magnitude, quake.id === selectedId)}
+            icon={createQuakeIcon(quake.magnitude, quake.id === selectedId, quake.id)}
             eventHandlers={{
+              add: (event) => {
+                const marker = event.target as L.Marker
+                markerQuakeIds.set(marker, quake.id)
+                marker.bindPopup(quakePopupHtml(quake), {
+                  className: 'quake-popup',
+                  autoPan: false,
+                  maxWidth: 280,
+                  closeButton: true,
+                })
+              },
               click: (event) => {
                 L.DomEvent.stopPropagation(event.originalEvent)
                 onSelect(quake.id)

@@ -47,9 +47,6 @@ export default function App() {
     return () => controller.abort()
   }, [timeframe])
 
-  const selected = earthquakes.find((quake) => quake.id === selectedId) ?? null
-  const selectedPlace = selected ? parsePlace(selected.place) : null
-
   const strongest = earthquakes.reduce<Earthquake | null>((best, quake) => {
     if (quake.magnitude === null) return best
     if (!best || (best.magnitude ?? -Infinity) < quake.magnitude) return quake
@@ -81,8 +78,8 @@ export default function App() {
           <p className="brand">Quakers</p>
           <h1>Reported earthquakes across the United States</h1>
           <p className="lede">
-            Live USGS catalog for the {activeLabel.toLowerCase()}. Click any quake for details — click
-            another to switch without closing. Dense areas group into clusters you can zoom into.
+            Live USGS catalog for the {activeLabel.toLowerCase()}. Click or tap any quake or cluster
+            for location, time, and magnitude. Pinch or use zoom buttons to look closer.
           </p>
         </div>
 
@@ -181,45 +178,6 @@ export default function App() {
           9+
         </span>
       </div>
-
-      {selected && selectedPlace ? (
-        <section
-          key={selected.id}
-          className="quake-info"
-          aria-live="polite"
-          aria-label="Selected earthquake"
-        >
-          <p className="quake-info-mag" style={{ color: magnitudeColor(selected.magnitude) }}>
-            M {formatMagnitude(selected.magnitude)}
-          </p>
-          <dl>
-            <div>
-              <dt>Locale</dt>
-              <dd>{selectedPlace.locale}</dd>
-            </div>
-            <div>
-              <dt>State</dt>
-              <dd>{selectedPlace.state ?? '—'}</dd>
-            </div>
-            <div>
-              <dt>When</dt>
-              <dd>
-                <time dateTime={new Date(selected.time).toISOString()}>
-                  {formatQuakeTime(selected.time)}
-                </time>
-              </dd>
-            </div>
-            <div>
-              <dt>Strength</dt>
-              <dd>Magnitude {formatMagnitude(selected.magnitude)}</dd>
-            </div>
-          </dl>
-          <a href={selected.url} target="_blank" rel="noreferrer">
-            USGS event page
-          </a>
-          <p className="quake-info-hint">Click another quake to switch · click the map to dismiss</p>
-        </section>
-      ) : null}
 
       <footer className="credit">
         Data from the{' '}

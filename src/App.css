@@ -368,84 +368,74 @@
   text-decoration: none;
 }
 
-.quake-info {
-  position: absolute;
-  z-index: 3;
-  right: max(1.25rem, env(safe-area-inset-right));
-  bottom: max(2.75rem, calc(env(safe-area-inset-bottom) + 2.4rem));
-  width: min(20.5rem, calc(100vw - 2.5rem));
-  padding: 1.05rem 1.15rem 0.95rem;
+.quake-map .leaflet-popup.quake-popup {
+  font-family: var(--font-body);
+}
+
+.quake-map .quake-popup .leaflet-popup-content-wrapper {
+  padding: 0;
   border-radius: 1rem;
   background: rgba(247, 250, 252, 0.96);
   border: 1px solid var(--panel-edge);
   box-shadow: 0 18px 40px rgba(21, 32, 41, 0.14);
-  backdrop-filter: blur(14px);
-  animation: info-swap 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  color: var(--ink);
 }
 
-.quake-info-mag {
-  margin: 0 0 0.55rem;
+.quake-map .quake-popup .leaflet-popup-content {
+  margin: 0.85rem 1rem 0.9rem;
+  min-width: 11.5rem;
+  line-height: 1.3;
+}
+
+.quake-map .quake-popup .leaflet-popup-content p {
+  margin: 0;
+}
+
+.quake-map .quake-popup .leaflet-popup-tip {
+  background: rgba(247, 250, 252, 0.96);
+  box-shadow: 0 4px 10px rgba(21, 32, 41, 0.12);
+}
+
+.quake-map .quake-popup a.leaflet-popup-close-button {
+  color: var(--ink-soft);
+  font-size: 1.15rem;
+  top: 0.35rem;
+  right: 0.4rem;
+}
+
+.quake-bubble {
+  margin: 0;
+}
+
+.quake-bubble-mag {
+  margin: 0 0 0.4rem;
   font-family: var(--font-display);
-  font-size: 1.7rem;
+  font-size: 1.45rem;
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1;
 }
 
-.quake-info dl {
+.quake-bubble-place {
   margin: 0;
-  display: grid;
-  gap: 0.45rem;
-}
-
-.quake-info dl div {
-  display: grid;
-  grid-template-columns: 4.5rem 1fr;
-  gap: 0.45rem;
-  font-size: 0.9rem;
-  line-height: 1.3;
-}
-
-.quake-info dt {
-  margin: 0;
-  color: var(--ink-soft);
-  font-weight: 600;
-}
-
-.quake-info dd {
-  margin: 0;
-  font-weight: 600;
-}
-
-.quake-info a {
-  display: inline-block;
-  margin-top: 0.8rem;
-  color: var(--brand);
+  font-size: 0.95rem;
   font-weight: 700;
-  text-decoration: none;
-  border-bottom: 1px solid rgba(13, 59, 76, 0.35);
+  color: var(--ink);
 }
 
-.quake-info a:hover {
-  border-bottom-color: var(--brand);
-}
-
-.quake-info-hint {
-  margin: 0.7rem 0 0;
-  font-size: 0.72rem;
-  font-weight: 500;
+.quake-bubble-time {
+  display: block;
+  margin-top: 0.28rem;
+  font-size: 0.82rem;
+  font-weight: 600;
   color: var(--ink-soft);
 }
 
-@keyframes info-swap {
-  from {
-    opacity: 0.55;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.quake-bubble-note {
+  margin: 0.45rem 0 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink-soft);
 }
 
 @keyframes rise-in {
@@ -573,12 +563,5 @@
 
   .status .fetched {
     display: none;
-  }
-
-  .quake-info {
-    left: max(1rem, env(safe-area-inset-left));
-    right: max(1rem, env(safe-area-inset-right));
-    bottom: max(2.6rem, calc(env(safe-area-inset-bottom) + 2.2rem));
-    width: auto;
   }
 }
