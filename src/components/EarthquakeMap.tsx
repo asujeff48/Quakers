@@ -129,21 +129,6 @@ function MapInitialView() {
   return null
 }
 
-function MapFocus({ selected }: { selected: Earthquake | null }) {
-  const map = useMap()
-
-  useEffect(() => {
-    if (!selected) return
-    // Keep current zoom so switching quakes is a light pan, not a reset.
-    map.panTo(shiftedLatLng(map, [selected.latitude, selected.longitude]), {
-      animate: true,
-      duration: 0.35,
-    })
-  }, [map, selected])
-
-  return null
-}
-
 /** Keep pan / pinch-zoom / scroll-zoom enabled for mouse and touch. */
 function MapGestures() {
   const map = useMap()
@@ -261,8 +246,6 @@ function createClusterIcon(cluster: L.MarkerCluster): L.DivIcon {
 }
 
 export function EarthquakeMap({ earthquakes, selectedId, onSelect }: Props) {
-  const selected = earthquakes.find((q) => q.id === selectedId) ?? null
-
   return (
     <MapContainer
       className="quake-map"
@@ -287,7 +270,6 @@ export function EarthquakeMap({ earthquakes, selectedId, onSelect }: Props) {
       <MapGestures />
       <MapInitialView />
       <MapBackgroundClick onClear={() => onSelect(null)} />
-      <MapFocus selected={selected} />
       <MarkerClusterGroup
         chunkedLoading
         showCoverageOnHover={false}
