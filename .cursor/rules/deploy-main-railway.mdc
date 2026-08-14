@@ -1,12 +1,13 @@
 ---
-description: Always land ready changes on GitHub main so Railway production updates
+description: Always push code changes to GitHub main and Railway production
 alwaysApply: true
 ---
 
 # GitHub main → Railway production
 
-- GitHub `main` is the only source of truth for app code.
-- Railway production is the only user-facing deploy; it autodeploys from `main`.
-- When work is ready for users (especially when they test the Railway URL), merge into `main` and push — do not leave the fix only on a feature branch or draft PR.
-- After pushing `main`, confirm the Railway deploy succeeds before asking the user to retest.
-- Never treat unmerged branches, local preview, or one-off Railway CLI uploads as production.
+- After every code change, merge into GitHub `main`, push, and deploy Railway production. Do not wait to be asked.
+- GitHub `main` (`asujeff48/Quakers`) is the only source of truth for app code.
+- Railway production (`quakers`) is the only user-facing site.
+- Railway often misses GitHub autodeploy — after `git push origin main`, trigger a production deploy of that commit and wait until it succeeds.
+- Confirm the live site is on the new commit before asking the user to retest. Hard-refresh the Railway URL.
+- Never leave a fix only on a feature branch, draft PR, local preview, or one-off CLI upload.
