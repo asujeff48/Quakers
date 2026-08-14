@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import L from 'leaflet'
 import 'leaflet.markercluster'
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents, ZoomControl } from 'react-leaflet'
@@ -152,46 +153,84 @@ function MapGestures() {
   return null
 }
 
-const markerQuakeIds = new WeakMap<L.Marker, string>()
+type Bubble = {
+  quake: Earthquake
+  lat: number
+  lng: number
+  note?: string
+}
 
 function quakeLocation(quake: Earthquake): string {
   const place = parsePlace(quake.place)
   return place.state ? `${place.locale}, ${place.state}` : place.locale
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+function isMarkerClickTarget(target: EventTarget | null): boolean {
+  const el = target instanceof Element ? target : target instanceof Node ? target.parentElement : null
+  return Boolean(
+    el?.closest(
+      '.quake-div-icon, .quake-cluster-icon, .quake-cluster, .quake-dot, .leaflet-marker-icon, .quake-bubble-wrap',
+    ),
+  )
 }
 
-function quakePopupHtml(quake: Earthquake, note?: string): string {
-  const noteLine = note ? `<p class="quake-bubble-note">${escapeHtml(note)}</p>` : ''
-  return `<div class="quake-bubble">
-    <p class="quake-bubble-mag" style="color:${magnitudeColor(quake.magnitude)}">M ${escapeHtml(formatMagnitude(quake.magnitude))}</p>
-    <p class="quake-bubble-place">${escapeHtml(quakeLocation(quake))}</p>
-    <time class="quake-bubble-time" datetime="${new Date(quake.time).toISOString()}">${escapeHtml(formatQuakeTime(quake.time))}</time>
-    ${noteLine}
-  </div>`
-}
+function QuakeDetailBubble({ bubble, onClose }: { bubble: Bubble; onClose: () => void }) {
+  const map = useMap()
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
 
-function isMapChromeTarget(target: EventTarget | null): boolean {
-  return target instanceof Element && Boolean(
-    target.closest('.quake-div-icon, .quake-cluster-icon, .leaflet-popup, .leaflet-marker-icon'),
+  useEffect(() => {
+    const update = () => {
+      const point = map.latLngToContainerPoint([bubble.lat, bubble.lng])
+      const rect = map.getContainer().getBoundingClientRect()
+      setPos({ x: rect.left + point.x, y: rect.top + point.y })
+    }
+
+    update()
+    map.on('move zoom viewreset', update)
+    window.addEventListener('resize', update)
+    return () => {
+      map.off('move zoom viewreset', update)
+      window.removeEventListener('resize', update)
+    }
+  }, [map, bubble.lat, bubble.lng])
+
+  const host = document.querySelector('.app')
+  if (!host || !pos) return null
+
+  return createPortal(
+    <div
+      className="quake-bubble-wrap"
+      style={{ left: pos.x, top: pos.y }}
+      role="dialog"
+      aria-label="Earthquake details"
+    >
+      <button type="button" className="quake-bubble-close" aria-label="Close details" onClick={onClose}>
+        ×
+      </button>
+      <p className="quake-bubble-mag" style={{ color: magnitudeColor(bubble.quake.magnitude) }}>
+        M {formatMagnitude(bubble.quake.magnitude)}
+      </p>
+      <p className="quake-bubble-place">{quakeLocation(bubble.quake)}</p>
+      <time className="quake-bubble-time" dateTime={new Date(bubble.quake.time).toISOString()}>
+        {formatQuakeTime(bubble.quake.time)}
+      </time>
+      {bubble.note ? <p className="quake-bubble-note">{bubble.note}</p> : null}
+    </div>,
+    host,
   )
 }
 
 function MapBackgroundClick({ onClear }: { onClear: () => void }) {
   useMapEvents({
     click: (event) => {
-      if (isMapChromeTarget(event.originalEvent.target)) return
+      if (isMarkerClickTarget(event.originalEvent.target)) return
       onClear()
     },
   })
   return null
 }
+
+const markerQuakeIds = new WeakMap<L.Marker, string>()
 
 function createQuakeIcon(magnitude: number | null, selected: boolean, id: string): L.DivIcon {
   const radius = magnitudeRadius(magnitude) + (selected ? 3 : 0)
@@ -246,6 +285,27 @@ function createClusterIcon(cluster: L.MarkerCluster): L.DivIcon {
 }
 
 export function EarthquakeMap({ earthquakes, selectedId, onSelect }: Props) {
+  const [bubble, setBubble] = useState<Bubble | null>(null)
+  const skipMapClick = useRef(false)
+
+  useEffect(() => {
+    setBubble(null)
+  }, [earthquakes])
+
+  const clearBubble = () => {
+    setBubble(null)
+    onSelect(null)
+  }
+
+  const showBubble = (quake: Earthquake, lat: number, lng: number, note?: string) => {
+    skipMapClick.current = true
+    window.setTimeout(() => {
+      skipMapClick.current = false
+    }, 50)
+    setBubble({ quake, lat, lng, note })
+    onSelect(quake.id)
+  }
+
   return (
     <MapContainer
       className="quake-map"
@@ -261,6 +321,7 @@ export function EarthquakeMap({ earthquakes, selectedId, onSelect }: Props) {
       boxZoom
       keyboard
       preferCanvas={false}
+      closePopupOnClick={false}
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
@@ -269,7 +330,13 @@ export function EarthquakeMap({ earthquakes, selectedId, onSelect }: Props) {
       <ZoomControl position="bottomright" />
       <MapGestures />
       <MapInitialView />
-      <MapBackgroundClick onClear={() => onSelect(null)} />
+      <MapBackgroundClick
+        onClear={() => {
+          if (skipMapClick.current) return
+          clearBubble()
+        }}
+      />
+      {bubble ? <QuakeDetailBubble bubble={bubble} onClose={clearBubble} /> : null}
       <MarkerClusterGroup
         chunkedLoading
         showCoverageOnHover={false}
@@ -295,17 +362,10 @@ export function EarthquakeMap({ earthquakes, selectedId, onSelect }: Props) {
           }
           if (!strongest) return
 
+          const latlng = cluster.getLatLng()
           const note =
             children.length > 1 ? `${children.length} quakes in this group` : undefined
-          cluster.unbindPopup()
-          cluster.bindPopup(quakePopupHtml(strongest, note), {
-            className: 'quake-popup',
-            autoPan: false,
-            maxWidth: 280,
-            closeButton: true,
-          })
-          cluster.openPopup()
-          onSelect(strongest.id)
+          showBubble(strongest, latlng.lat, latlng.lng, note)
         }}
       >
         {earthquakes.map((quake) => (
@@ -315,18 +375,11 @@ export function EarthquakeMap({ earthquakes, selectedId, onSelect }: Props) {
             icon={createQuakeIcon(quake.magnitude, quake.id === selectedId, quake.id)}
             eventHandlers={{
               add: (event) => {
-                const marker = event.target as L.Marker
-                markerQuakeIds.set(marker, quake.id)
-                marker.bindPopup(quakePopupHtml(quake), {
-                  className: 'quake-popup',
-                  autoPan: false,
-                  maxWidth: 280,
-                  closeButton: true,
-                })
+                markerQuakeIds.set(event.target, quake.id)
               },
               click: (event) => {
                 L.DomEvent.stopPropagation(event.originalEvent)
-                onSelect(quake.id)
+                showBubble(quake, quake.latitude, quake.longitude)
               },
             }}
           />
