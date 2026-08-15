@@ -255,6 +255,28 @@ function markerQuakeId(marker: L.Marker): string | null {
   )
 }
 
+function quakeFromMarker(marker: L.Marker, earthquakes: Earthquake[]): Earthquake | undefined {
+  const id = markerQuakeId(marker)
+  if (id) {
+    const match = earthquakes.find((item) => item.id === id)
+    if (match) return match
+  }
+  const ll = marker.getLatLng()
+  return earthquakes.find(
+    (item) => Math.abs(item.latitude - ll.lat) < 1e-5 && Math.abs(item.longitude - ll.lng) < 1e-5,
+  )
+}
+
+function clusterFromEvent(event: L.LeafletMouseEvent): L.MarkerCluster | null {
+  const candidates = [event.layer, event.propagatedFrom, event.target]
+  for (const layer of candidates) {
+    if (typeof (layer as L.MarkerCluster | undefined)?.getAllChildMarkers === 'function') {
+      return layer as L.MarkerCluster
+    }
+  }
+  return null
+}
+
 function markerMagnitude(marker: L.Marker): number {
   const className = marker.options.icon?.options?.className ?? ''
   const match = className.match(/quake-mag-([\d.]+|na)/)
@@ -347,14 +369,13 @@ export function EarthquakeMap({ earthquakes, selectedId, onSelect }: Props) {
         iconCreateFunction={createClusterIcon}
         onClick={(event) => {
           L.DomEvent.stopPropagation(event.originalEvent)
-          const cluster = (event.propagatedFrom ?? event.layer) as L.MarkerCluster
-          if (!cluster?.getAllChildMarkers) return
+          const cluster = clusterFromEvent(event)
+          if (!cluster) return
 
           const children = cluster.getAllChildMarkers()
           let strongest: Earthquake | null = null
           for (const marker of children) {
-            const id = markerQuakeId(marker)
-            const quake = id ? earthquakes.find((item) => item.id === id) : undefined
+            const quake = quakeFromMarker(marker, earthquakes)
             if (!quake) continue
             if (!strongest || (quake.magnitude ?? -Infinity) > (strongest.magnitude ?? -Infinity)) {
               strongest = quake

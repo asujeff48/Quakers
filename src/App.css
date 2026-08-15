@@ -155,7 +155,12 @@
   padding: max(1.25rem, env(safe-area-inset-top)) max(1.25rem, env(safe-area-inset-right)) 0
     max(1.25rem, env(safe-area-inset-left));
   max-width: 44rem;
+  pointer-events: none;
   animation: rise-in 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.chrome button {
+  pointer-events: auto;
 }
 
 .brand-block .brand {
@@ -244,6 +249,7 @@
   margin-top: 0.85rem;
   padding: 0 max(1.25rem, env(safe-area-inset-right)) 0 max(1.25rem, env(safe-area-inset-left));
   max-width: 44rem;
+  pointer-events: none;
   animation: rise-in 850ms 120ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -335,6 +341,7 @@
   font-weight: 600;
   color: var(--ink-soft);
   backdrop-filter: blur(10px);
+  pointer-events: none;
 }
 
 .legend-item {
@@ -360,9 +367,11 @@
   margin: 0;
   font-size: 0.75rem;
   color: var(--ink-soft);
+  pointer-events: none;
 }
 
 .credit a {
+  pointer-events: auto;
   color: var(--brand);
   font-weight: 600;
   text-decoration: none;
