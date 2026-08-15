@@ -99,6 +99,97 @@
   border-bottom-right-radius: 0.65rem;
 }
 
+.map-nav {
+  display: grid;
+  gap: 0.4rem;
+  margin-right: max(1rem, env(safe-area-inset-right));
+  margin-bottom: 0.4rem;
+  pointer-events: auto;
+}
+
+.map-nav-regions {
+  display: grid;
+  border: 1px solid var(--panel-edge);
+  border-radius: 0.65rem;
+  overflow: hidden;
+  background: rgba(244, 248, 250, 0.95);
+  box-shadow: 0 8px 20px rgba(21, 32, 41, 0.12);
+}
+
+.map-nav-regions button {
+  appearance: none;
+  border: 0;
+  border-bottom: 1px solid var(--panel-edge);
+  background: transparent;
+  color: var(--brand);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 0.42rem 0.55rem;
+  cursor: pointer;
+}
+
+.map-nav-regions button:last-child {
+  border-bottom: 0;
+}
+
+.map-nav-regions button:hover,
+.map-nav-pad button:hover {
+  background: #fff;
+  color: var(--ink);
+}
+
+.map-nav-regions button:focus-visible,
+.map-nav-pad button:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+.map-nav-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 2.15rem);
+  grid-template-rows: repeat(3, 2.15rem);
+  gap: 0.15rem;
+  justify-content: center;
+}
+
+.map-nav-pad button {
+  appearance: none;
+  width: 2.15rem;
+  height: 2.15rem;
+  padding: 0;
+  border: 1px solid var(--panel-edge);
+  border-radius: 0.45rem;
+  background: rgba(244, 248, 250, 0.95);
+  color: var(--brand);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(21, 32, 41, 0.1);
+}
+
+.map-nav-n {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.map-nav-w {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.map-nav-e {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.map-nav-s {
+  grid-column: 2;
+  grid-row: 3;
+}
+
 .quake-div-icon {
   background: transparent;
   border: 0;
@@ -613,5 +704,14 @@
 
   .status .fetched {
     display: none;
+  }
+
+  .map-nav-pad {
+    display: none;
+  }
+
+  .map-nav-regions button {
+    font-size: 0.68rem;
+    padding: 0.36rem 0.45rem;
   }
 }

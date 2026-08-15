@@ -73,8 +73,8 @@ export default function App() {
           <p className="brand">Quakers</p>
           <h1>Reported earthquakes across the United States</h1>
           <p className="lede">
-            Live USGS catalog for the {activeLabel.toLowerCase()}. Click or tap any quake or cluster
-            for location, time, and magnitude. Pinch or use zoom buttons to look closer.
+            Live USGS catalog for the {activeLabel.toLowerCase()}. Click or tap any quake for details.
+            Drag the map, or use the arrows and Alaska / Hawaii buttons to look around.
           </p>
         </div>
 

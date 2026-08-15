@@ -12,6 +12,10 @@ import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 
 const USA_CENTER: [number, number] = [39.5, -98.35]
 const USA_ZOOM = 4
+const ALASKA_CENTER: [number, number] = [64.2, -152.5]
+const ALASKA_ZOOM = 4
+const HAWAII_CENTER: [number, number] = [20.7, -157.2]
+const HAWAII_ZOOM = 6
 const OVERLAY_BREAKPOINT = 720
 /** Contiguous west coast — keep this longitude just right of the overlay. */
 const WEST_COAST: [number, number] = [40.0, -124.3]
@@ -101,19 +105,38 @@ function MapInitialView() {
   const map = useMap()
 
   useEffect(() => {
+    let userMoved = false
+    let applying = false
+
     const apply = () => {
+      if (userMoved) return
+      applying = true
       map.setView(shiftedLatLng(map, USA_CENTER, USA_ZOOM), USA_ZOOM, { animate: false })
+      applying = false
+    }
+
+    const markMoved = () => {
+      if (!applying) userMoved = true
+    }
+
+    const goHome = () => {
+      userMoved = false
+      apply()
     }
 
     apply()
     const frame = requestAnimationFrame(apply)
     window.addEventListener('resize', apply)
+    map.on('dragstart zoomstart movestart', markMoved)
+    map.on('quakers:home', goHome)
 
     const overlay = document.querySelector('.status-rail')
     if (!overlay) {
       return () => {
         cancelAnimationFrame(frame)
         window.removeEventListener('resize', apply)
+        map.off('dragstart zoomstart movestart', markMoved)
+        map.off('quakers:home', goHome)
       }
     }
 
@@ -123,7 +146,70 @@ function MapInitialView() {
     return () => {
       cancelAnimationFrame(frame)
       window.removeEventListener('resize', apply)
+      map.off('dragstart zoomstart movestart', markMoved)
+      map.off('quakers:home', goHome)
       observer.disconnect()
+    }
+  }, [map])
+
+  return null
+}
+
+function addNavButton(
+  parent: HTMLElement,
+  className: string,
+  label: string,
+  aria: string,
+  onClick: () => void,
+) {
+  const button = L.DomUtil.create('button', className, parent) as HTMLButtonElement
+  button.type = 'button'
+  button.textContent = label
+  button.setAttribute('aria-label', aria)
+  L.DomEvent.disableClickPropagation(button)
+  L.DomEvent.on(button, 'click', onClick)
+}
+
+/** Arrow pad plus Alaska / Hawaii / Lower 48 jumps for mouse-only screens. */
+function MapNavControl() {
+  const map = useMap()
+
+  useEffect(() => {
+    const control = new L.Control({ position: 'bottomright' })
+
+    control.onAdd = () => {
+      const root = L.DomUtil.create('div', 'map-nav')
+      const regions = L.DomUtil.create('div', 'map-nav-regions', root)
+      const pad = L.DomUtil.create('div', 'map-nav-pad', root)
+
+      addNavButton(regions, '', 'Lower 48', 'Show contiguous United States', () => {
+        map.fire('quakers:home')
+      })
+      addNavButton(regions, '', 'Alaska', 'Show Alaska', () => {
+        map.setView(ALASKA_CENTER, ALASKA_ZOOM)
+      })
+      addNavButton(regions, '', 'Hawaii', 'Show Hawaii', () => {
+        map.setView(HAWAII_CENTER, HAWAII_ZOOM)
+      })
+
+      const pan = (x: number, y: number) => {
+        const size = map.getSize()
+        map.panBy([size.x * x, size.y * y], { animate: true, duration: 0.28 })
+      }
+
+      addNavButton(pad, 'map-nav-n', '↑', 'Pan north', () => pan(0, -0.42))
+      addNavButton(pad, 'map-nav-w', '←', 'Pan west', () => pan(-0.42, 0))
+      addNavButton(pad, 'map-nav-e', '→', 'Pan east', () => pan(0.42, 0))
+      addNavButton(pad, 'map-nav-s', '↓', 'Pan south', () => pan(0, 0.42))
+
+      L.DomEvent.disableClickPropagation(root)
+      L.DomEvent.disableScrollPropagation(root)
+      return root
+    }
+
+    control.addTo(map)
+    return () => {
+      control.remove()
     }
   }, [map])
 
@@ -146,7 +232,7 @@ function MapGestures() {
     container.style.touchAction = 'none'
     container.setAttribute(
       'aria-label',
-      'Earthquake map. Drag to pan, pinch or use zoom buttons to zoom. Click a quake for details.',
+      'Earthquake map. Click and drag to pan, or use the arrows and Alaska / Hawaii buttons. Click a quake for details.',
     )
   }, [map])
 
@@ -348,6 +434,7 @@ export function EarthquakeMap({ earthquakes, selectedId, onSelect }: Props) {
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
       />
+      <MapNavControl />
       <ZoomControl position="bottomright" />
       <MapGestures />
       <MapInitialView />
