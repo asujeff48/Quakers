@@ -323,16 +323,24 @@
   animation: pulse 1.4s ease-out infinite;
 }
 
-.legend {
+.legend-stack {
   position: absolute;
   z-index: 2;
   left: max(1.25rem, env(safe-area-inset-left));
   bottom: max(2.75rem, calc(env(safe-area-inset-bottom) + 2.4rem));
+  display: grid;
+  gap: 0.45rem;
+  max-width: min(22.5rem, calc(100vw - 5.5rem));
+  pointer-events: none;
+}
+
+.legend {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.45rem 0.65rem;
-  max-width: min(28rem, calc(100vw - 5.5rem));
   padding: 0.45rem 0.7rem;
   border-radius: 0.85rem;
   background: rgba(244, 248, 250, 0.9);
@@ -341,7 +349,34 @@
   font-weight: 600;
   color: var(--ink-soft);
   backdrop-filter: blur(10px);
-  pointer-events: none;
+}
+
+.legend-clusters {
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: nowrap;
+}
+
+.legend-cluster-demo {
+  width: 2.35rem;
+  height: 2.35rem;
+  flex-shrink: 0;
+}
+
+.legend-cluster-demo strong {
+  font-size: 0.82rem;
+}
+
+.legend-cluster-demo em {
+  font-size: 0.48rem;
+}
+
+.legend-cluster-copy {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink-soft);
 }
 
 .legend-item {
@@ -555,18 +590,25 @@
     padding-left: 0.65rem;
   }
 
-  .legend {
-    position: absolute;
+  .legend-stack {
     left: max(0.75rem, env(safe-area-inset-left));
-    right: auto;
-    top: auto;
     bottom: max(2.35rem, calc(env(safe-area-inset-bottom) + 2rem));
-    margin: 0;
-    width: auto;
     max-width: min(22rem, calc(100vw - 5.25rem));
+  }
+
+  .legend {
     gap: 0.32rem 0.5rem;
     padding: 0.35rem 0.55rem;
     font-size: 0.66rem;
+  }
+
+  .legend-cluster-copy {
+    font-size: 0.62rem;
+  }
+
+  .legend-cluster-demo {
+    width: 2.05rem;
+    height: 2.05rem;
   }
 
   .status .fetched {

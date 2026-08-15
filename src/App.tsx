@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { EarthquakeMap } from './components/EarthquakeMap'
 import {
   DEFAULT_TIMEFRAME,
@@ -144,6 +144,21 @@ export default function App() {
         )}
       </aside>
 
+      <div className="legend-stack">
+      <div className="legend legend-clusters" aria-label="Numbered cluster legend">
+        <span
+          className="quake-cluster legend-cluster-demo"
+          style={{ '--cluster-color': magnitudeColor(1.5) } as CSSProperties}
+          aria-hidden="true"
+        >
+          <strong>12</strong>
+          <em>max M2.1</em>
+        </span>
+        <p className="legend-cluster-copy">
+          Numbered circles group nearby quakes for the {activeLabel.toLowerCase()}. The large
+          number is the count; max M is the strongest.
+        </p>
+      </div>
       <div className="legend" aria-label="Magnitude color legend">
         <span className="legend-item">
           <span className="swatch" style={{ background: magnitudeColor(1.5) }} />
@@ -177,6 +192,7 @@ export default function App() {
           <span className="swatch" style={{ background: magnitudeColor(9.5) }} />
           9+
         </span>
+      </div>
       </div>
 
       <footer className="credit">
