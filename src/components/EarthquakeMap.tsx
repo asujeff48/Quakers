@@ -5,7 +5,7 @@ import 'leaflet.markercluster'
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents, ZoomControl } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import type { Earthquake } from '../types'
-import { formatMagnitude, formatQuakeTime, magnitudeColor, magnitudeRadius, parsePlace } from '../usgs'
+import { formatMagnitude, formatPlace, formatQuakeTime, magnitudeColor, magnitudeRadius } from '../usgs'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
@@ -161,8 +161,7 @@ type Bubble = {
 }
 
 function quakeLocation(quake: Earthquake): string {
-  const place = parsePlace(quake.place)
-  return place.state ? `${place.locale}, ${place.state}` : place.locale
+  return formatPlace(quake.place)
 }
 
 function isMarkerClickTarget(target: EventTarget | null): boolean {

@@ -9,9 +9,9 @@ import {
 import {
   fetchUsaEarthquakes,
   formatMagnitude,
+  formatPlace,
   formatQuakeTime,
   magnitudeColor,
-  parsePlace,
 } from './usgs'
 import './App.css'
 
@@ -52,12 +52,7 @@ export default function App() {
     if (!best || (best.magnitude ?? -Infinity) < quake.magnitude) return quake
     return best
   }, null)
-  const strongestPlace = strongest ? parsePlace(strongest.place) : null
-  const strongestLocation = strongestPlace
-    ? strongestPlace.state
-      ? `${strongestPlace.locale}, ${strongestPlace.state}`
-      : strongestPlace.locale
-    : null
+  const strongestLocation = strongest ? formatPlace(strongest.place) : null
 
   const activeLabel =
     TIMEFRAMES.find((option) => option.id === timeframe)?.label ?? 'Last 24 hours'

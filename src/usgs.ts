@@ -148,6 +148,30 @@ export function formatMagnitude(mag: number | null): string {
   return mag.toFixed(1)
 }
 
+const KM_TO_MILES = 0.621371
+
+function formatMiles(km: number): string {
+  const miles = km * KM_TO_MILES
+  if (miles < 10) {
+    const text = miles.toFixed(1)
+    return text.endsWith('.0') ? text.slice(0, -2) : text
+  }
+  return String(Math.round(miles))
+}
+
+/** USGS place with km distances shown in miles, e.g. "1.9 mi NNW of Murrieta, CA". */
+export function formatPlace(place: string): string {
+  const trimmed = place.trim()
+  if (!trimmed) return 'Unknown location'
+
+  const ofMatch = trimmed.match(/^(\d+(?:\.\d+)?)\s*km\s+([A-Za-z]+)\s+of\s+(.+)$/i)
+  if (ofMatch) {
+    return `${formatMiles(Number(ofMatch[1]))} mi ${ofMatch[2]} of ${ofMatch[3].trim()}`
+  }
+
+  return trimmed.replace(/(\d+(?:\.\d+)?)\s*km\b/gi, (_, value: string) => `${formatMiles(Number(value))} mi`)
+}
+
 /** Split USGS place strings like "3 km NNW of Murrieta, CA" into locale + state. */
 export function parsePlace(place: string): { locale: string; state: string | null } {
   const trimmed = place.trim()
