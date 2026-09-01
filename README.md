@@ -33,6 +33,14 @@ Same pattern as SkyLight:
 2. Production autodeploys from GitHub `main`.
 3. Caddy listens on `$PORT` (default `3000`).
 
+### CARTO basemap API key
+
+CARTO raster map tiles require a free API key. Without it, the map shows an **API key required** watermark.
+
+1. Request a key at [carto.com/basemaps/apikey](https://carto.com/basemaps/apikey) (no CARTO account needed).
+2. Set `VITE_CARTO_API_KEY` in Railway for the `quakers` service (redeploy after adding it).
+3. For local dev, copy `.env.example` to `.env` and paste your key there.
+
 ## Data source
 
 Earthquakes are requested from the USGS FDSN Event Web Service (`format=geojson`) and filtered to U.S. regions client-side.

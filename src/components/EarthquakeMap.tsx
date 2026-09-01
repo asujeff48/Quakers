@@ -4,6 +4,7 @@ import L from 'leaflet'
 import 'leaflet.markercluster'
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents, ZoomControl } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
+import { cartoTileLayerUrl } from '../carto'
 import type { Earthquake } from '../types'
 import { formatMagnitude, formatPlace, formatQuakeTime, magnitudeColor, magnitudeRadius } from '../usgs'
 import 'leaflet/dist/leaflet.css'
@@ -432,7 +433,7 @@ export function EarthquakeMap({ earthquakes, selectedId, onSelect }: Props) {
     >
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        url={cartoTileLayerUrl()}
       />
       <MapNavControl />
       <ZoomControl position="bottomright" />

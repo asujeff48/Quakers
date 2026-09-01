@@ -10,6 +10,10 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . ./
+
+ARG VITE_CARTO_API_KEY
+ENV VITE_CARTO_API_KEY=$VITE_CARTO_API_KEY
+
 RUN npm run build
 
 # Serve with Caddy
