@@ -70,6 +70,12 @@ export default function App() {
 
       <header className="chrome">
         <div className="brand-block">
+          <a
+            className="funapps-home"
+            href="https://skylight-production-e449.up.railway.app"
+          >
+            ← FunApps.net
+          </a>
           <p className="brand">Quakers</p>
           <h1>Reported earthquakes across the United States</h1>
           <p className="lede">

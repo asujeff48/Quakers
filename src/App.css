@@ -254,6 +254,22 @@
   pointer-events: auto;
 }
 
+.funapps-home {
+  pointer-events: auto;
+  display: inline-block;
+  margin: 0 0 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  color: var(--ink-soft);
+  transition: color 160ms ease;
+}
+
+.funapps-home:hover {
+  color: var(--brand);
+}
+
 .brand-block .brand {
   margin: 0;
   font-family: var(--font-display);
