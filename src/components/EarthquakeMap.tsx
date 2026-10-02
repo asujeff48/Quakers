@@ -13,6 +13,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
 
 const USA_CENTER: [number, number] = [39.5, -98.35]
 const USA_ZOOM = 4
+const LOWER_48 = L.latLngBounds(L.latLng(24.5, -124.8), L.latLng(49.2, -66.9))
 const ALASKA_CENTER: [number, number] = [64.2, -152.5]
 const ALASKA_ZOOM = 4
 const HAWAII_CENTER: [number, number] = [20.7, -157.2]
@@ -112,7 +113,24 @@ function MapInitialView() {
     const apply = () => {
       if (userMoved) return
       applying = true
-      map.setView(shiftedLatLng(map, USA_CENTER, USA_ZOOM), USA_ZOOM, { animate: false })
+      if (map.getSize().x <= OVERLAY_BREAKPOINT) {
+        const topEl = document.querySelector('.status-rail')
+        const bottomEl = document.querySelector('.legend-stack')
+        const size = map.getSize()
+        const top = topEl
+          ? Math.max(16, Math.round(topEl.getBoundingClientRect().bottom) + 10)
+          : 16
+        const legendTop = bottomEl?.getBoundingClientRect().top
+        const bottom =
+          legendTop == null ? 16 : Math.max(16, Math.round(size.y - legendTop) + 10)
+        map.fitBounds(LOWER_48, {
+          paddingTopLeft: L.point(12, top),
+          paddingBottomRight: L.point(68, bottom),
+          animate: false,
+        })
+      } else {
+        map.setView(shiftedLatLng(map, USA_CENTER, USA_ZOOM), USA_ZOOM, { animate: false })
+      }
       applying = false
     }
 
