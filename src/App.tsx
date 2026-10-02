@@ -70,10 +70,7 @@ export default function App() {
 
       <header className="chrome">
         <div className="brand-block">
-          <a
-            className="funapps-home"
-            href="https://skylight-production-e449.up.railway.app"
-          >
+          <a className="funapps-home" href="https://funapps.net">
             ← FunApps.net
           </a>
           <p className="brand">Quakers</p>

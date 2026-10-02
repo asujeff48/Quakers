@@ -250,7 +250,8 @@
   animation: rise-in 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.chrome button {
+.chrome button,
+.funapps-home {
   pointer-events: auto;
 }
 
@@ -643,6 +644,11 @@
     gap: 0.5rem;
     padding: max(0.55rem, env(safe-area-inset-top)) max(0.85rem, env(safe-area-inset-right)) 0
       max(0.85rem, env(safe-area-inset-left));
+  }
+
+  .funapps-home {
+    margin-bottom: 0.15rem;
+    font-size: 0.72rem;
   }
 
   .brand-block .brand {
