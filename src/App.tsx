@@ -1,9 +1,11 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useState, type CSSProperties } from 'react'
 import { EarthquakeMap } from './components/EarthquakeMap'
+import { QuakeList } from './components/QuakeList'
 import {
   DEFAULT_TIMEFRAME,
   TIMEFRAMES,
   type Earthquake,
+  type QuakeFocus,
   type TimeframeId,
 } from './types'
 import {
@@ -22,12 +24,19 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
   const [fetchedAt, setFetchedAt] = useState<number | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [focus, setFocus] = useState<QuakeFocus | null>(null)
+
+  const focusQuake = useCallback((id: string) => {
+    setSelectedId(id)
+    setFocus((current) => ({ id, token: (current?.token ?? 0) + 1 }))
+  }, [])
 
   useEffect(() => {
     const controller = new AbortController()
     setLoading(true)
     setError(null)
     setSelectedId(null)
+    setFocus(null)
 
     fetchUsaEarthquakes(timeframe, controller.signal)
       .then((result) => {
@@ -59,10 +68,12 @@ export default function App() {
 
   return (
     <div className="app">
+      <div className="map-column">
       <div className="map-stage" aria-hidden={false}>
         <EarthquakeMap
           earthquakes={earthquakes}
           selectedId={selectedId}
+          focus={focus}
           onSelect={setSelectedId}
         />
         <div className="map-veil" />
@@ -76,8 +87,8 @@ export default function App() {
           <p className="brand">Quakers</p>
           <h1>Reported earthquakes across the United States</h1>
           <p className="lede">
-            Live USGS catalog for the {activeLabel.toLowerCase()}. Click or tap any quake for details.
-            Drag the map, or use the arrows and Alaska / Hawaii buttons to look around.
+            Live USGS catalog for the {activeLabel.toLowerCase()}. Choose a quake on the map or in the
+            list. Drag the map, or use the arrows and Alaska / Hawaii buttons to look around.
           </p>
         </div>
 
@@ -199,6 +210,14 @@ export default function App() {
           U.S. Geological Survey
         </a>
       </footer>
+      </div>
+      <QuakeList
+        earthquakes={earthquakes}
+        selectedId={selectedId}
+        loading={loading}
+        error={error}
+        onSelect={focusQuake}
+      />
     </div>
   )
 }

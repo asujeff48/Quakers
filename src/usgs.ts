@@ -143,9 +143,65 @@ export function formatQuakeTime(ms: number): string {
   }).format(new Date(ms))
 }
 
+/** Compact age for the list. Older events fall back to the local timestamp. */
+export function formatRelativeTime(ms: number, now = Date.now()): string {
+  const delta = now - ms
+  if (!Number.isFinite(delta) || delta < 0) return formatQuakeTime(ms)
+  const minutes = Math.floor(delta / 60_000)
+  if (minutes < 1) return 'Just now'
+  if (minutes < 60) return `${minutes} min ago`
+  const hours = Math.floor(delta / 3_600_000)
+  if (hours < 24) return hours === 1 ? '1 hr ago' : `${hours} hr ago`
+  const days = Math.floor(delta / 86_400_000)
+  if (days < 45) return days === 1 ? '1 day ago' : `${days} days ago`
+  return formatQuakeTime(ms)
+}
+
 export function formatMagnitude(mag: number | null): string {
   if (mag === null || Number.isNaN(mag)) return '—'
   return mag.toFixed(1)
+}
+
+export function formatDepthKm(depthKm: number | null): string | null {
+  if (depthKm === null || Number.isNaN(depthKm)) return null
+  return `${depthKm.toFixed(1)} km`
+}
+
+export type QuakeSort = 'newest' | 'magnitude'
+
+/** Newest first, or strongest first with newest breaking ties. Does not mutate. */
+export function sortQuakes(quakes: readonly Earthquake[], sort: QuakeSort): Earthquake[] {
+  const copy = [...quakes]
+  copy.sort((a, b) => {
+    if (sort === 'magnitude') {
+      const byMag =
+        (b.magnitude ?? Number.NEGATIVE_INFINITY) - (a.magnitude ?? Number.NEGATIVE_INFINITY)
+      if (byMag !== 0) return byMag
+    }
+    if (a.time !== b.time) return b.time - a.time
+    if (a.id < b.id) return -1
+    if (a.id > b.id) return 1
+    return 0
+  })
+  return copy
+}
+
+function channelLuminance(channel: number): number {
+  const srgb = channel / 255
+  return srgb <= 0.04045 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4
+}
+
+function relativeLuminance(hex: string): number {
+  const value = Number.parseInt(hex.slice(1), 16)
+  const red = channelLuminance((value >> 16) & 255)
+  const green = channelLuminance((value >> 8) & 255)
+  const blue = channelLuminance(value & 255)
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue
+}
+
+/** Text color that stays readable on `magnitudeColor`. */
+export function magnitudeInk(mag: number | null): string {
+  return relativeLuminance(magnitudeColor(mag)) > 0.183 ? '#152029' : '#f8fbfc'
 }
 
 const KM_TO_MILES = 0.621371

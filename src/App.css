@@ -20,10 +20,20 @@
 
 .app {
   position: relative;
+  display: flex;
   min-height: 100%;
   height: 100%;
   overflow: hidden;
   color: var(--ink);
+}
+
+.map-column {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .map-stage {
@@ -438,7 +448,7 @@
   bottom: max(2.75rem, calc(env(safe-area-inset-bottom) + 2.4rem));
   display: grid;
   gap: 0.45rem;
-  max-width: min(22.5rem, calc(100vw - 5.5rem));
+  max-width: min(22.5rem, calc(100% - 5.5rem));
   pointer-events: none;
 }
 
@@ -539,7 +549,7 @@
 .quake-bubble-wrap::after {
   content: '';
   position: absolute;
-  left: 50%;
+  left: calc(50% + var(--arrow-shift, 0px));
   bottom: -8px;
   margin-left: -8px;
   border: 8px solid transparent;
@@ -706,7 +716,7 @@
   .legend-stack {
     left: max(0.75rem, env(safe-area-inset-left));
     bottom: max(2.35rem, calc(env(safe-area-inset-bottom) + 2rem));
-    max-width: min(22rem, calc(100vw - 5.25rem));
+    max-width: min(22rem, calc(100% - 5.25rem));
   }
 
   .legend {
@@ -735,5 +745,301 @@
   .map-nav-regions button {
     font-size: 0.68rem;
     padding: 0.36rem 0.45rem;
+  }
+}
+
+.quake-panel {
+  flex: 0 0 22rem;
+  width: 22rem;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #f7fafc;
+  color: var(--ink);
+  border-left: 1px solid var(--panel-edge);
+  box-shadow: -12px 0 32px rgba(21, 32, 41, 0.06);
+  z-index: 6;
+}
+
+.quake-panel.is-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(22rem, calc(100vw - 2.75rem));
+  flex: none;
+  transform: translateX(105%);
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: none;
+  z-index: 8;
+}
+
+.quake-panel.is-drawer.is-open {
+  transform: translateX(0);
+  box-shadow: -18px 0 44px rgba(21, 32, 41, 0.22);
+}
+
+.quake-panel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 7;
+  border: 0;
+  padding: 0;
+  background: rgba(21, 32, 41, 0.34);
+  cursor: pointer;
+}
+
+.quake-panel-toggle {
+  position: fixed;
+  z-index: 6;
+  top: max(0.65rem, env(safe-area-inset-top));
+  right: max(0.75rem, env(safe-area-inset-right));
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--panel-edge);
+  border-radius: 999px;
+  background: rgba(247, 250, 252, 0.96);
+  color: var(--brand);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.4rem 0.55rem 0.4rem 0.75rem;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(21, 32, 41, 0.14);
+}
+
+.quake-panel-toggle-count {
+  min-width: 1.35rem;
+  padding: 0.08rem 0.4rem;
+  border-radius: 999px;
+  background: var(--brand);
+  color: #f7fbfd;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.quake-panel-header {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.95rem 0.95rem 0.8rem;
+  border-bottom: 1px solid var(--panel-edge);
+}
+
+.quake-panel.is-drawer .quake-panel-header {
+  padding-top: max(0.95rem, env(safe-area-inset-top));
+}
+
+.quake-panel-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.quake-panel-heading h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--brand);
+}
+
+.quake-panel-count {
+  margin: 0.2rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.quake-panel-updating {
+  color: var(--accent);
+}
+
+.quake-panel-close {
+  appearance: none;
+  border: 1px solid var(--panel-edge);
+  background: #fff;
+  color: var(--brand);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+}
+
+.quake-sort {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.quake-sort button {
+  appearance: none;
+  flex: 1 1 0;
+  border: 1px solid var(--panel-edge);
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.55rem;
+  cursor: pointer;
+}
+
+.quake-sort button[aria-pressed='true'] {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #f7fbfd;
+}
+
+.quake-panel-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding-bottom: env(safe-area-inset-bottom);
+  touch-action: pan-y;
+}
+
+.quake-panel-list {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quake-row-slot {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+.quake-row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  height: 100%;
+  padding: 0.45rem 0.9rem;
+  border: 0;
+  border-bottom: 1px solid rgba(21, 32, 41, 0.08);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.quake-row.is-selected {
+  background: rgba(13, 59, 76, 0.1);
+}
+
+.quake-row-mag {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.7rem;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 0 0 1px rgba(21, 32, 41, 0.14);
+}
+
+.quake-row.is-selected .quake-row-mag {
+  box-shadow:
+    inset 0 0 0 1px rgba(21, 32, 41, 0.14),
+    0 0 0 2px #f7fafc,
+    0 0 0 4px var(--brand);
+}
+
+.quake-row-copy {
+  min-width: 0;
+  display: grid;
+  gap: 0.12rem;
+}
+
+.quake-row-place {
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.quake-row-meta {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quake-panel-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 1.25rem 1rem 1.5rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+.quake-panel-message.is-error {
+  color: var(--danger);
+}
+
+.quake-panel button:focus-visible,
+.quake-panel-toggle:focus-visible,
+.quake-panel-backdrop:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.quake-row:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 3px var(--brand);
+  background: rgba(13, 59, 76, 0.08);
+}
+
+.quake-row.is-selected:focus {
+  background: rgba(13, 59, 76, 0.14);
+}
+
+@media (hover: hover) {
+  .quake-sort button:hover,
+  .quake-panel-close:hover,
+  .quake-panel-toggle:hover {
+    border-color: rgba(13, 59, 76, 0.4);
+  }
+
+  .quake-row:hover {
+    background: rgba(13, 59, 76, 0.05);
+  }
+
+  .quake-row.is-selected:hover {
+    background: rgba(13, 59, 76, 0.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quake-panel.is-drawer {
+    transition: none;
   }
 }
