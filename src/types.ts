@@ -16,6 +16,12 @@ export const TIMEFRAMES: TimeframeOption[] = [
 
 export const DEFAULT_TIMEFRAME: TimeframeId = '24h'
 
+/** A list click that should pan the map. `token` changes on every request. */
+export type QuakeFocus = {
+  id: string
+  token: number
+}
+
 export type Earthquake = {
   id: string
   magnitude: number | null

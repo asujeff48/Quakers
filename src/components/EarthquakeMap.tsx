@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import L from 'leaflet'
 import 'leaflet.markercluster'
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents, ZoomControl } from 'react-leaflet'
 import MarkerClusterGroup from 'react-leaflet-cluster'
 import { cartoTileLayerUrl } from '../carto'
-import type { Earthquake } from '../types'
+import type { Earthquake, QuakeFocus } from '../types'
 import { formatMagnitude, formatPlace, formatQuakeTime, magnitudeColor, magnitudeRadius } from '../usgs'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
@@ -27,8 +27,12 @@ const OVERLAY_CLEARANCE = 40
 type Props = {
   earthquakes: Earthquake[]
   selectedId: string | null
+  focus: QuakeFocus | null
   onSelect: (id: string | null) => void
 }
+
+/** Zoom where individual markers replace clusters, so a list pick can show its dot. */
+const FOCUS_ZOOM = 9
 
 /**
  * Right edge of painted ink. Flex/grid chrome stretches to the 44rem column, and
@@ -109,10 +113,10 @@ function MapInitialView() {
   useEffect(() => {
     let userMoved = false
     let applying = false
+    let lastW = -1
+    let lastH = -1
 
-    const apply = () => {
-      if (userMoved) return
-      applying = true
+    const frameHome = () => {
       if (map.getSize().x <= OVERLAY_BREAKPOINT) {
         const topEl = document.querySelector('.status-rail')
         const bottomEl = document.querySelector('.legend-stack')
@@ -131,6 +135,22 @@ function MapInitialView() {
       } else {
         map.setView(shiftedLatLng(map, USA_CENTER, USA_ZOOM), USA_ZOOM, { animate: false })
       }
+    }
+
+    // The recent-quakes column changes the map width without a window resize.
+    const apply = () => {
+      const rect = map.getContainer().getBoundingClientRect()
+      const width = Math.round(rect.width)
+      const height = Math.round(rect.height)
+      if (width === 0 || height === 0) return
+
+      applying = true
+      if (width !== lastW || height !== lastH) {
+        lastW = width
+        lastH = height
+        map.invalidateSize({ animate: false, pan: false })
+      }
+      if (!userMoved) frameHome()
       applying = false
     }
 
@@ -149,18 +169,12 @@ function MapInitialView() {
     map.on('dragstart zoomstart movestart', markMoved)
     map.on('quakers:home', goHome)
 
-    const overlay = document.querySelector('.status-rail')
-    if (!overlay) {
-      return () => {
-        cancelAnimationFrame(frame)
-        window.removeEventListener('resize', apply)
-        map.off('dragstart zoomstart movestart', markMoved)
-        map.off('quakers:home', goHome)
-      }
-    }
-
     const observer = new ResizeObserver(apply)
-    observer.observe(overlay)
+    observer.observe(map.getContainer())
+    const overlay = document.querySelector('.status-rail')
+    if (overlay) observer.observe(overlay)
+    const legend = document.querySelector('.legend-stack')
+    if (legend) observer.observe(legend)
 
     return () => {
       cancelAnimationFrame(frame)
@@ -170,6 +184,38 @@ function MapInitialView() {
       observer.disconnect()
     }
   }, [map])
+
+  return null
+}
+
+function focusLatLng(map: L.Map, lat: number, lng: number, zoom: number): L.LatLng {
+  const offsetY = Math.min(110, Math.max(48, map.getSize().y * 0.14))
+  return map.unproject(map.project(L.latLng(lat, lng), zoom).subtract([0, offsetY]), zoom)
+}
+
+function MapFocus({
+  focus,
+  earthquakes,
+  onFocused,
+}: {
+  focus: QuakeFocus | null
+  earthquakes: Earthquake[]
+  onFocused: (quake: Earthquake) => void
+}) {
+  const map = useMap()
+  const seen = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (!focus || focus.token === seen.current) return
+    const quake = earthquakes.find((item) => item.id === focus.id)
+    if (!quake) return
+    seen.current = focus.token
+    const zoom = Math.max(map.getZoom(), FOCUS_ZOOM)
+    const target = focusLatLng(map, quake.latitude, quake.longitude, zoom)
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    map.flyTo(target, zoom, reduce ? { animate: false, duration: 0 } : { duration: 0.6 })
+    onFocused(quake)
+  }, [focus, earthquakes, map, onFocused])
 
   return null
 }
@@ -251,7 +297,7 @@ function MapGestures() {
     container.style.touchAction = 'none'
     container.setAttribute(
       'aria-label',
-      'Earthquake map. Click and drag to pan, or use the arrows and Alaska / Hawaii buttons. Click a quake for details.',
+      'Earthquake map. Click and drag to pan, or use the arrows and Alaska / Hawaii buttons. Click a quake for details, or choose one from the recent quakes list.',
     )
   }, [map])
 
@@ -278,15 +324,26 @@ function isMarkerClickTarget(target: EventTarget | null): boolean {
   )
 }
 
+function clampBubbleX(rect: DOMRect, rawX: number): { x: number; arrow: number } {
+  const half = Math.min(132, Math.max(72, rect.width / 2 - 12))
+  const minX = rect.left + half
+  const maxX = rect.right - half
+  const x = minX <= maxX ? Math.min(maxX, Math.max(minX, rawX)) : rect.left + rect.width / 2
+  const arrow = Math.max(-half + 20, Math.min(half - 20, rawX - x))
+  return { x, arrow }
+}
+
 function QuakeDetailBubble({ bubble, onClose }: { bubble: Bubble; onClose: () => void }) {
   const map = useMap()
-  const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
+  const [pos, setPos] = useState<{ x: number; y: number; arrow: number } | null>(null)
 
   useEffect(() => {
     const update = () => {
       const point = map.latLngToContainerPoint([bubble.lat, bubble.lng])
       const rect = map.getContainer().getBoundingClientRect()
-      setPos({ x: rect.left + point.x, y: rect.top + point.y })
+      const rawX = rect.left + point.x
+      const clamped = clampBubbleX(rect, rawX)
+      setPos({ x: clamped.x, y: rect.top + point.y, arrow: clamped.arrow })
     }
 
     update()
@@ -304,7 +361,13 @@ function QuakeDetailBubble({ bubble, onClose }: { bubble: Bubble; onClose: () =>
   return createPortal(
     <div
       className="quake-bubble-wrap"
-      style={{ left: pos.x, top: pos.y }}
+      style={
+        {
+          left: pos.x,
+          top: pos.y,
+          '--arrow-shift': `${pos.arrow}px`,
+        } as CSSProperties
+      }
       role="dialog"
       aria-label="Earthquake details"
     >
@@ -410,7 +473,7 @@ function createClusterIcon(cluster: L.MarkerCluster): L.DivIcon {
   })
 }
 
-export function EarthquakeMap({ earthquakes, selectedId, onSelect }: Props) {
+export function EarthquakeMap({ earthquakes, selectedId, focus, onSelect }: Props) {
   const [bubble, setBubble] = useState<Bubble | null>(null)
   const skipMapClick = useRef(false)
 
@@ -418,19 +481,33 @@ export function EarthquakeMap({ earthquakes, selectedId, onSelect }: Props) {
     setBubble(null)
   }, [earthquakes])
 
-  const clearBubble = () => {
+  useEffect(() => {
+    if (!selectedId) setBubble(null)
+  }, [selectedId])
+
+  const clearBubble = useCallback(() => {
     setBubble(null)
     onSelect(null)
-  }
+  }, [onSelect])
 
-  const showBubble = (quake: Earthquake, lat: number, lng: number, note?: string) => {
-    skipMapClick.current = true
-    window.setTimeout(() => {
-      skipMapClick.current = false
-    }, 50)
-    setBubble({ quake, lat, lng, note })
-    onSelect(quake.id)
-  }
+  const showBubble = useCallback(
+    (quake: Earthquake, lat: number, lng: number, note?: string) => {
+      skipMapClick.current = true
+      window.setTimeout(() => {
+        skipMapClick.current = false
+      }, 50)
+      setBubble({ quake, lat, lng, note })
+      onSelect(quake.id)
+    },
+    [onSelect],
+  )
+
+  const revealFocused = useCallback(
+    (quake: Earthquake) => {
+      showBubble(quake, quake.latitude, quake.longitude)
+    },
+    [showBubble],
+  )
 
   return (
     <MapContainer
@@ -457,6 +534,7 @@ export function EarthquakeMap({ earthquakes, selectedId, onSelect }: Props) {
       <ZoomControl position="bottomright" />
       <MapGestures />
       <MapInitialView />
+      <MapFocus focus={focus} earthquakes={earthquakes} onFocused={revealFocused} />
       <MapBackgroundClick
         onClear={() => {
           if (skipMapClick.current) return
